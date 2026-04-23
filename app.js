@@ -1,10 +1,10 @@
 const AppConfig = {
-    // Automatically detects if you are on ngrok or local
-    API_URL: window.location.hostname.includes('ngrok-free.dev') 
+    // Uses ngrok if on GitHub or ngrok; otherwise defaults to localhost
+    API_URL: (window.location.hostname.includes('github.io') || 
+              window.location.hostname.includes('ngrok-free.dev'))
         ? 'https://linwood-feudalistic-lorenzo.ngrok-free.dev' 
         : 'http://localhost:3000'
 };
-
 const state = {
     products: [],
     cart: JSON.parse(localStorage.getItem('rd_cart')) || [],
