@@ -1,7 +1,7 @@
 const AppConfig = {
     API_URL: window.location.hostname.includes('github.io')
-        ? 'https://linwood-feudalistic-lorenzo.ngrok-free.dev' 
-        : 'http://localhost:3000'
+      
+        : 'https://linwood-feudalistic-lorenzo.ngrok-free.dev'
 };
 const state = {
     products: [],
