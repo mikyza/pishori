@@ -1,5 +1,4 @@
 const AppConfig = {
-    // Hardcoded to only use your ngrok tunnel
     API_URL: 'https://linwood-feudalistic-lorenzo.ngrok-free.dev' 
 };
 const state = {
@@ -11,15 +10,15 @@ const state = {
 const api = {
     async request(endpoint, options = {}) {
         try {
-            const res = await fetch(`${AppConfig.API_URL}${endpoint}`, {
-                ...options,
-                headers: {
-                    'Authorization': `Bearer ${state.user?.token}`,
-                    // Only set Content-Type if we aren't sending FormData (for Admin uploads)
-                    ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
-                    ...options.headers
-                }
-            });
+           const res = await fetch(`${AppConfig.API_URL}${endpoint}`, {
+    ...options,
+    headers: {
+        'Authorization': `Bearer ${state.user?.token}`,
+        'ngrok-skip-browser-warning': 'true', // <--- ADD THIS EXACT LINE
+        ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
+        ...options.headers
+    }
+});
             if (!res.ok) {
                 const text = await res.json();
                 throw new Error(text.error || "Server Error");
