@@ -1,7 +1,6 @@
 const AppConfig = {
-    API_URL: window.location.hostname.includes('github.io')
-      
-        : 'https://linwood-feudalistic-lorenzo.ngrok-free.dev'
+    // Hardcoded to only use your ngrok tunnel
+    API_URL: 'https://linwood-feudalistic-lorenzo.ngrok-free.dev' 
 };
 const state = {
     products: [],
