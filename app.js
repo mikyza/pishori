@@ -1,7 +1,5 @@
 const AppConfig = {
-    // Uses ngrok if on GitHub or ngrok; otherwise defaults to localhost
-    API_URL: (window.location.hostname.includes('github.io') || 
-              window.location.hostname.includes('ngrok-free.dev'))
+    API_URL: window.location.hostname.includes('github.io')
         ? 'https://linwood-feudalistic-lorenzo.ngrok-free.dev' 
         : 'http://localhost:3000'
 };
