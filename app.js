@@ -142,7 +142,9 @@ const auth = {
             body.name = document.getElementById('authName').value;
             body.email = document.getElementById('authEmail').value;
         }
-
+// Add this inside your auth.submit function
+const pass = document.getElementById('authPass').value;
+console.log("Password length being sent:", pass.length);
         try {
             const res = await api.request(endpoint, { 
                 method: 'POST', 
