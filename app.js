@@ -110,46 +110,43 @@ const auth = {
         }
     },
     
-// ... inside the auth object ...
-async submit(e) {
-    e.preventDefault();
-    
-    // Grab the values
-    const phoneInput = document.getElementById('authPhone');
-    const passInput = document.getElementById('authPass');
-    
-    if (!phoneInput || !passInput) {
-        return ui.toast("Form inputs missing", "error");
-    }
+    async submit(e) {
+        e.preventDefault();
+        const phone = document.getElementById('authPhone').value;
+        const pass = document.getElementById('authPass').value;
+        
+        // Prepare the body based on mode
+        let body = { phone, password: pass };
+        
+        if (this.mode === 'register') {
+            body.name = document.getElementById('authName').value;
+            body.email = document.getElementById('authEmail').value;
+        }
 
-    const phone = phoneInput.value;
-    const password = passInput.value;
+        const endpoint = this.mode === 'login' ? '/api/auth/login' : '/api/auth/register';
 
-    let body = { phone, password };
+        try {
+            const res = await api.request(endpoint, { 
+                method: 'POST', 
+                body: JSON.stringify(body) 
+            });
+            
+            if (res && res.token) {
+                state.user = res;
+                localStorage.setItem('rd_user', JSON.stringify(res));
+                this.hideModal();
+                ui.setupUserEnvironment();
+                ui.toast(`Welcome back!`);
+            } else if (res && res.message) {
+                // Handle successful registration redirect to login
+                ui.toast("Account created! Log in with your phone.");
+                this.showMode('login');
+            }
+        } catch (error) {
+            ui.toast("Authentication failed. Check your details.");
+        }
+    },
 
-    if (this.mode === 'register') {
-        body.name = document.getElementById('authName').value;
-        body.email = document.getElementById('authEmail').value;
-    }
-
-    const endpoint = this.mode === 'login' ? '/api/auth/login' : '/api/auth/register';
-
-    const res = await api.request(endpoint, { 
-        method: 'POST', 
-        body: JSON.stringify(body) 
-    });
-    
-    if (res && res.token) {
-        state.user = res; // This now contains state.user.phone
-        localStorage.setItem('rd_user', JSON.stringify(res));
-        this.hideModal();
-        ui.setupUserEnvironment();
-        ui.toast(`Welcome back!`);
-    } else if (res && res.message) {
-        ui.toast("Account created! Please login.");
-        this.showMode('login');
-    }
-}
     async submitForgot(e) {
         e.preventDefault();
         const email = document.getElementById('resetEmail').value;
@@ -458,62 +455,20 @@ const cartLogic = {
         }
     },
 
- // Replace your existing cartLogic.checkout with this:
-async checkout() {
+    async checkout() {
     if (!state.user) return auth.showModal();
     if (state.cart.length === 0) return ui.toast("Cart is empty");
 
     const usePoints = document.getElementById('usePointsToggle')?.checked;
     const finalTotal = parseFloat(document.getElementById('cartTotal').innerText.replace('$', ''));
 
-    // Step 1: Create the order in your database first (Server 3000)
+    // We send the cart and whether points were used. 
+    // The server will re-calculate the pointsEarned for security.
     const payload = {
         items: state.cart,
         total: finalTotal,
         pointsUsed: usePoints ? 100 : 0
     };
-
-    const res = await api.request('/api/orders', { 
-        method: 'POST', 
-        body: JSON.stringify(payload) 
-    });
-
-    if (res && res.success) {
-        ui.toast("Order saved! Initiating M-Pesa payment...", "success");
-        
-        // Step 2: Trigger the STK Push (Server 3500)
-        // Note: Using the phone number stored in state.user
-        this.initiateMpesa(finalTotal);
-    }
-},
-
-async initiateMpesa(amount) {
-    try {
-        // Pointing to your M-Pesa server on port 3500
-        const response = await fetch("http://localhost:3500/stkpush", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                phone: state.user.phone, // Passing the phone from logged in user
-                amount: amount
-            }),
-        });
-        
-        const result = await response.json();
-        if(result.message) {
-            ui.toast("Check your phone for the M-Pesa prompt!");
-            
-            // Clear cart only after payment is initiated
-            state.cart = [];
-            localStorage.removeItem('rd_cart');
-            this.renderItems();
-            ui.toggleCart();
-        }
-    } catch (error) {
-        console.error("Payment Error:", error);
-        ui.toast("M-Pesa Service Unavailable", "error");
-    }
-}
 
     const res = await api.request('/api/orders', { 
         method: 'POST', 
