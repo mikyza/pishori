@@ -110,43 +110,46 @@ const auth = {
         }
     },
     
-    async submit(e) {
-        e.preventDefault();
-        const phone = document.getElementById('authPhone').value;
-        const pass = document.getElementById('authPass').value;
-        
-        // Prepare the body based on mode
-        let body = { phone, password: pass };
-        
-        if (this.mode === 'register') {
-            body.name = document.getElementById('authName').value;
-            body.email = document.getElementById('authEmail').value;
-        }
+// ... inside the auth object ...
+async submit(e) {
+    e.preventDefault();
+    
+    // Grab the values
+    const phoneInput = document.getElementById('authPhone');
+    const passInput = document.getElementById('authPass');
+    
+    if (!phoneInput || !passInput) {
+        return ui.toast("Form inputs missing", "error");
+    }
 
-        const endpoint = this.mode === 'login' ? '/api/auth/login' : '/api/auth/register';
+    const phone = phoneInput.value;
+    const password = passInput.value;
 
-        try {
-            const res = await api.request(endpoint, { 
-                method: 'POST', 
-                body: JSON.stringify(body) 
-            });
-            
-            if (res && res.token) {
-                state.user = res;
-                localStorage.setItem('rd_user', JSON.stringify(res));
-                this.hideModal();
-                ui.setupUserEnvironment();
-                ui.toast(`Welcome back!`);
-            } else if (res && res.message) {
-                // Handle successful registration redirect to login
-                ui.toast("Account created! Log in with your phone.");
-                this.showMode('login');
-            }
-        } catch (error) {
-            ui.toast("Authentication failed. Check your details.");
-        }
-    },
+    let body = { phone, password };
 
+    if (this.mode === 'register') {
+        body.name = document.getElementById('authName').value;
+        body.email = document.getElementById('authEmail').value;
+    }
+
+    const endpoint = this.mode === 'login' ? '/api/auth/login' : '/api/auth/register';
+
+    const res = await api.request(endpoint, { 
+        method: 'POST', 
+        body: JSON.stringify(body) 
+    });
+    
+    if (res && res.token) {
+        state.user = res; // This now contains state.user.phone
+        localStorage.setItem('rd_user', JSON.stringify(res));
+        this.hideModal();
+        ui.setupUserEnvironment();
+        ui.toast(`Welcome back!`);
+    } else if (res && res.message) {
+        ui.toast("Account created! Please login.");
+        this.showMode('login');
+    }
+}
     async submitForgot(e) {
         e.preventDefault();
         const email = document.getElementById('resetEmail').value;
