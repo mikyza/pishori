@@ -31,67 +31,128 @@ const api = {
     }
 };
 
-// --- AUTH ROUTES ---
-// Updated Register Route
-app.post('/api/auth/register', async (req, res) => {
-    const { name, email, password, phone } = req.body; // Added phone
-    try {
-        const hashed = await bcrypt.hash(password, 10);
-        // Ensure your DB table has the 'phone' column
-        await db.execute('INSERT INTO users (name, email, password, phone) VALUES (?, ?, ?, ?)', 
-            [name, email, hashed, phone]);
-        res.status(201).json({ success: true, message: "User registered" });
-    } catch (e) { 
-        res.status(400).json({ error: "Email or Phone already registered." }); 
-    }
-});
 
-// Updated Login Route
-app.post('/api/auth/login', async (req, res) => {
-    const { phone, password } = req.body; // Changed from email to phone
-    try {
-        const [users] = await db.execute('SELECT * FROM users WHERE phone = ?', [phone]);
-        if (users.length && await bcrypt.compare(password, users[0].password)) {
-            const token = jwt.sign({ id: users[0].id, role: users[0].role }, JWT_SECRET, { expiresIn: '24h' });
-            // Return phone to the frontend so it can be used for STK Push
-            res.json({ 
-                token, 
-                role: users[0].role, 
-                name: users[0].name, 
-                points: users[0].points,
-                phone: users[0].phone 
-            });
-        } else {
-            res.status(401).json({ error: "Invalid phone or password." });
+const auth = {
+    mode: 'login', // 'login', 'register', 'forgot'
+
+    showModal(mode = 'login') {
+        this.showMode(mode);
+        const modal = document.getElementById('authModal');
+        const box = document.getElementById('authBox');
+        modal.classList.remove('invisible');
+        setTimeout(() => { box.classList.remove('scale-95', 'opacity-0'); }, 10);
+    },
+    
+    hideModal() {
+        const modal = document.getElementById('authModal');
+        const box = document.getElementById('authBox');
+        box.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => { modal.classList.add('invisible'); }, 300);
+    },
+
+showMode(mode) {
+        this.mode = mode;
+        const form = document.getElementById('authForm');
+        const forgotForm = document.getElementById('forgotForm');
+        const title = document.getElementById('authTitle');
+        const subtitle = document.getElementById('authSubtitle'); // Added subtitle support
+        const nameInput = document.getElementById('authName');
+        const btn = document.getElementById('authBtn');
+        const toggleText = document.getElementById('authToggleText');
+        const toggleLink = document.getElementById('authToggleLink');
+        const forgotLink = document.getElementById('forgotLink');
+
+        // Hide both initially
+        form.classList.add('hidden');
+        forgotForm.classList.add('hidden');
+
+        if (mode === 'login') {
+            form.classList.remove('hidden');
+            title.innerText = "Welcome Back";
+            subtitle.innerText = "Log in to access your premium pishori and rewards";
+            nameInput.classList.add('hidden');
+            nameInput.removeAttribute('required');
+            btn.innerText = "Login Securely";
+            forgotLink.classList.remove('hidden');
+            toggleText.innerText = "New here?";
+            toggleLink.innerText = "Register now";
+            toggleLink.onclick = () => this.showMode('register');
+        } else if (mode === 'register') {
+            form.classList.remove('hidden');
+            title.innerText = "Create Account";
+            subtitle.innerText = "Join the community and start earning points";
+            nameInput.classList.remove('hidden');
+            nameInput.setAttribute('required', 'true');
+            btn.innerText = "Join RiceDirect";
+            forgotLink.classList.add('hidden');
+            toggleText.innerText = "Already a member?";
+            toggleLink.innerText = "Login here";
+            toggleLink.onclick = () => this.showMode('login');
+        } else if (mode === 'forgot') {
+            forgotForm.classList.remove('hidden');
+            title.innerText = "Reset Password";
+            subtitle.innerText = "Follow the steps to secure your account";
+            toggleText.innerText = "Back to safety?";
+            toggleLink.innerText = "Return to Login";
+            toggleLink.onclick = () => this.showMode('login');
         }
-    } catch (e) { res.status(500).json({ error: "Database error." }); }
-});
-// FORGOT PASSWORD LOGIC
-app.post('/api/auth/forgot-password', async (req, res) => {
-    const { email, newPassword } = req.body;
-    try {
-        const [users] = await db.execute('SELECT id FROM users WHERE email = ?', [email]);
-        if (!users.length) return res.status(404).json({ error: "Email not found in our database." });
+    },
+    
+ async submit(e) {
+        e.preventDefault();
+        // 1. Get the phone instead of email
+        const phone = document.getElementById('authPhone').value; 
+        const pass = document.getElementById('authPass').value;
         
-        const hashed = await bcrypt.hash(newPassword, 10);
-        await db.execute('UPDATE users SET password = ? WHERE email = ?', [hashed, email]);
-        res.json({ success: true, message: "Password successfully reset! You can now login." });
-    } catch (e) { res.status(500).json({ error: "Database error." }); }
-});
+        // 2. Prepare the request body
+        const endpoint = this.mode === 'login' ? '/api/auth/login' : '/api/auth/register';
+        
+        let body = { phone, password: pass };
+        
+        if (this.mode === 'register') {
+            body.name = document.getElementById('authName').value;
+            body.email = document.getElementById('authEmail').value; // Keep email for registration records
+        }
+
+        try {
+            const res = await api.request(endpoint, { 
+                method: 'POST', 
+                body: JSON.stringify(body) 
+            });
+            
+            if (res && res.token) {
+                state.user = res;
+                localStorage.setItem('rd_user', JSON.stringify(res));
+                this.hideModal();
+                ui.setupUserEnvironment();
+                ui.toast(`Welcome back!`);
+            } else if (res && res.message) {
+                ui.toast("Account created! Please login.");
+                this.showMode('login');
+            }
+        } catch (error) {
+            ui.toast("Invalid phone or password.");
+        }
+    },
 
     async submitForgot(e) {
         e.preventDefault();
-        const email = document.getElementById('resetEmail').value;
+        // 3. Update Forgot Password to use phone for consistency
+        const phone = document.getElementById('resetPhone').value;
         const newPassword = document.getElementById('resetPass').value;
 
-        const res = await api.request('/api/auth/forgot-password', {
-            method: 'POST',
-            body: JSON.stringify({ email, newPassword })
-        });
+        try {
+            const res = await api.request('/api/auth/forgot-password', {
+                method: 'POST',
+                body: JSON.stringify({ phone, newPassword })
+            });
 
-        if (res && res.success) {
-            ui.toast(res.message);
-            this.showMode('login');
+            if (res && res.success) {
+                ui.toast(res.message);
+                this.showMode('login');
+            }
+        } catch (error) {
+            ui.toast("Update failed. Check the phone number.");
         }
     },
 
