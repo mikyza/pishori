@@ -98,42 +98,24 @@ showMode(mode) {
         }
     },
     
- async submit(e) {
-        e.preventDefault();
-        // 1. Get the phone instead of email
-        const phone = document.getElementById('authPhone').value; 
-        const pass = document.getElementById('authPass').value;
-        
-        // 2. Prepare the request body
-        const endpoint = this.mode === 'login' ? '/api/auth/login' : '/api/auth/register';
-        
-        let body = { phone, password: pass };
-        
-        if (this.mode === 'register') {
-            body.name = document.getElementById('authName').value;
-            body.email = document.getElementById('authEmail').value; // Keep email for registration records
-        }
+async submit(e) {
+    e.preventDefault();
+    
+    // Get the raw value and clean it
+    let phone = document.getElementById('authPhone').value.trim();
+    
+    // Remove '+' if the user typed it (e.g., +254 -> 254)
+    phone = phone.replace('+', '');
+    
+    const pass = document.getElementById('authPass').value;
 
-        try {
-            const res = await api.request(endpoint, { 
-                method: 'POST', 
-                body: JSON.stringify(body) 
-            });
-            
-            if (res && res.token) {
-                state.user = res;
-                localStorage.setItem('rd_user', JSON.stringify(res));
-                this.hideModal();
-                ui.setupUserEnvironment();
-                ui.toast(`Welcome back!`);
-            } else if (res && res.message) {
-                ui.toast("Account created! Please login.");
-                this.showMode('login');
-            }
-        } catch (error) {
-            ui.toast("Invalid phone or password.");
-        }
-    },
+    console.log("Sending to Backend:", { phone }); // Debugging
+
+    const body = { phone, password: pass };
+    const endpoint = this.mode === 'login' ? '/api/auth/login' : '/api/auth/register';
+
+    // ... your fetch/api.request code
+}
 
     async submitForgot(e) {
         e.preventDefault();
