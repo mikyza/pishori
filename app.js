@@ -686,7 +686,23 @@ const hero = {
 // Add this to your (async () => { ... })() block at the bottom of app.js
 hero.init();
 
-
+const handlePayment = async () => {
+  try {
+    const response = await fetch("http://localhost:3500/stkpush", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: currentUserId, // Logged in user ID
+        amount: totalCartAmount // The calculated total from the purchase
+      }),
+    });
+    
+    const result = await response.json();
+    alert("Check your phone for the M-Pesa PIN prompt!");
+  } catch (error) {
+    console.error("Payment Error:", error);
+  }
+};
 
 
 
