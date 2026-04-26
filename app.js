@@ -39,121 +39,142 @@ const auth = {
         this.showMode(mode);
         const modal = document.getElementById('authModal');
         const box = document.getElementById('authBox');
-        modal.classList.remove('invisible');
-        setTimeout(() => { box.classList.remove('scale-95', 'opacity-0'); }, 10);
+        if (modal && box) {
+            modal.classList.remove('invisible');
+            setTimeout(() => { box.classList.remove('scale-95', 'opacity-0'); }, 10);
+        }
     },
     
     hideModal() {
         const modal = document.getElementById('authModal');
         const box = document.getElementById('authBox');
-        box.classList.add('scale-95', 'opacity-0');
-        setTimeout(() => { modal.classList.add('invisible'); }, 300);
+        if (modal && box) {
+            box.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { modal.classList.add('invisible'); }, 300);
+        }
     },
 
-showMode(mode) {
+    showMode(mode) {
         this.mode = mode;
         const form = document.getElementById('authForm');
         const forgotForm = document.getElementById('forgotForm');
         const title = document.getElementById('authTitle');
-        const subtitle = document.getElementById('authSubtitle'); // Added subtitle support
+        const subtitle = document.getElementById('authSubtitle');
         const nameInput = document.getElementById('authName');
+        const emailContainer = document.getElementById('emailContainer'); 
         const btn = document.getElementById('authBtn');
         const toggleText = document.getElementById('authToggleText');
         const toggleLink = document.getElementById('authToggleLink');
         const forgotLink = document.getElementById('forgotLink');
 
-        // Hide both initially
+        if (!form || !forgotForm) return;
+
         form.classList.add('hidden');
         forgotForm.classList.add('hidden');
 
         if (mode === 'login') {
             form.classList.remove('hidden');
-            title.innerText = "Welcome Back";
-            subtitle.innerText = "Log in to access your premium pishori and rewards";
-            nameInput.classList.add('hidden');
-            nameInput.removeAttribute('required');
-            btn.innerText = "Login Securely";
-            forgotLink.classList.remove('hidden');
-            toggleText.innerText = "New here?";
-            toggleLink.innerText = "Register now";
-            toggleLink.onclick = () => this.showMode('register');
+            if (title) title.innerText = "Welcome Back";
+            if (subtitle) subtitle.innerText = "Log in to access your premium pishori and rewards";
+            
+            if (nameInput) {
+                nameInput.classList.add('hidden');
+                nameInput.removeAttribute('required');
+            }
+            if (emailContainer) emailContainer.classList.add('hidden');
+            
+            if (btn) btn.innerText = "Login Securely";
+            if (forgotLink) forgotLink.classList.remove('hidden');
+            
+            if (toggleText) toggleText.innerText = "New here?";
+            if (toggleLink) {
+                toggleLink.innerText = "Register now";
+                toggleLink.onclick = () => this.showMode('register');
+            }
         } else if (mode === 'register') {
             form.classList.remove('hidden');
-            title.innerText = "Create Account";
-            subtitle.innerText = "Join the community and start earning points";
-            nameInput.classList.remove('hidden');
-            nameInput.setAttribute('required', 'true');
-            btn.innerText = "Join RiceDirect";
-            forgotLink.classList.add('hidden');
-            toggleText.innerText = "Already a member?";
-            toggleLink.innerText = "Login here";
-            toggleLink.onclick = () => this.showMode('login');
+            if (title) title.innerText = "Create Account";
+            if (subtitle) subtitle.innerText = "Join the community and start earning points";
+            
+            if (nameInput) {
+                nameInput.classList.remove('hidden');
+                nameInput.setAttribute('required', 'true');
+            }
+            // Registration needs the email field visible
+            if (emailContainer) emailContainer.classList.remove('hidden');
+            
+            if (btn) btn.innerText = "Join RiceDirect";
+            if (forgotLink) forgotLink.classList.add('hidden');
+            
+            if (toggleText) toggleText.innerText = "Already a member?";
+            if (toggleLink) {
+                toggleLink.innerText = "Login here";
+                toggleLink.onclick = () => this.showMode('login');
+            }
         } else if (mode === 'forgot') {
             forgotForm.classList.remove('hidden');
-            title.innerText = "Reset Password";
-            subtitle.innerText = "Follow the steps to secure your account";
-            toggleText.innerText = "Back to safety?";
-            toggleLink.innerText = "Return to Login";
-            toggleLink.onclick = () => this.showMode('login');
+            if (title) title.innerText = "Reset Password";
+            if (subtitle) subtitle.innerText = "Follow the steps to secure your account";
+            
+            if (toggleText) toggleText.innerText = "Back to safety?";
+            if (toggleLink) {
+                toggleLink.innerText = "Return to Login";
+                toggleLink.onclick = () => this.showMode('login');
+            }
         }
     },
     
-async submit(e) {
+    async submit(e) {
         e.preventDefault();
         
         // 1. Get and clean the phone number
-        let phone = document.getElementById('authPhone').value.trim();
-        phone = phone.replace('+', '');
-        
-        // 2. Get the password
+        let phoneInput = document.getElementById('authPhone');
+        if (!phoneInput) return;
+
+        let phone = phoneInput.value.trim().replace('+', '');
         const pass = document.getElementById('authPass').value;
 
-        console.log("Attempting login with:", { phone });
-
-        // 3. Determine endpoint and build the body
+        // 2. Determine endpoint and build the body
         const endpoint = this.mode === 'login' ? '/api/auth/login' : '/api/auth/register';
         let body = { phone, password: pass };
         
-        // If registering, we need to grab the name and email too
         if (this.mode === 'register') {
             body.name = document.getElementById('authName').value;
             body.email = document.getElementById('authEmail').value;
         }
 
         try {
-            // 4. Send the request to your ngrok backend
             const res = await api.request(endpoint, { 
                 method: 'POST', 
                 body: JSON.stringify(body) 
             });
             
-            // 5. Handle the response
             if (res && res.token) {
                 state.user = res;
                 localStorage.setItem('rd_user', JSON.stringify(res));
                 this.hideModal();
                 ui.setupUserEnvironment();
                 ui.toast(`Welcome back, ${res.name}!`);
-            } else if (res && res.message) {
+            } else if (res && (res.message || res.success)) {
                 ui.toast("Account created! Please login.");
                 this.showMode('login');
             }
         } catch (error) {
             console.error("Auth Error:", error);
-            ui.toast("Login failed. Check your phone or password.");
+            ui.toast(error.message || "Login failed. Check your details.");
         }
     },
 
     async submitForgot(e) {
         e.preventDefault();
-        // 3. Update Forgot Password to use phone for consistency
-        const phone = document.getElementById('resetPhone').value;
+        // FIX: Matches the id="resetEmail" in your index.html
+        const email = document.getElementById('resetEmail').value;
         const newPassword = document.getElementById('resetPass').value;
 
         try {
             const res = await api.request('/api/auth/forgot-password', {
                 method: 'POST',
-                body: JSON.stringify({ phone, newPassword })
+                body: JSON.stringify({ email, newPassword })
             });
 
             if (res && res.success) {
@@ -161,7 +182,7 @@ async submit(e) {
                 this.showMode('login');
             }
         } catch (error) {
-            ui.toast("Update failed. Check the phone number.");
+            ui.toast(error.message || "Reset failed.");
         }
     },
 
