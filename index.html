@@ -323,32 +323,60 @@ input[type="number"]::-webkit-outer-spin-button {
             </button>
         </div>
         
-      <form id="authForm" onsubmit="auth.submit(event)" class="space-y-5">
+<form id="authForm" onsubmit="auth.submit(event)" class="space-y-5">
     <div class="relative">
         <i class="fas fa-user absolute left-4 top-4 text-gray-300"></i>
-        <input type="text" id="authName" placeholder="Full Name" class="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl hidden outline-none focus:ring-2 ring-organic-500/20 focus:bg-white transition-all">
+        <input type="text" id="authName" placeholder="Full Name" class="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl hidden outline-none focus:ring-2 ring-organic-500/20">
     </div>
 
-    <div class="relative" id="phoneContainer">
+    <div class="relative">
         <i class="fas fa-phone absolute left-4 top-4 text-gray-300"></i>
-        <input type="tel" id="authPhone" placeholder="Phone (e.g., 2547XXXXXXXX)" class="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 ring-organic-500/20 focus:bg-white transition-all" required>
+        <input type="tel" id="authPhone" placeholder="Phone Number" class="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 ring-organic-500/20" required>
     </div>
 
     <div class="relative" id="emailContainer">
         <i class="fas fa-envelope absolute left-4 top-4 text-gray-300"></i>
-        <input type="email" id="authEmail" placeholder="Email Address" class="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 ring-organic-500/20 focus:bg-white transition-all">
+        <input type="email" id="authEmail" placeholder="Email Address" class="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 ring-organic-500/20">
+    </div>
+<form id="authForm" onsubmit="auth.submit(event)" class="space-y-5">
+    <div class="relative">
+        <i class="fas fa-user absolute left-4 top-4 text-gray-300"></i>
+        <input type="text" id="authName" placeholder="Full Name" class="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl hidden outline-none focus:ring-2 ring-organic-500/20">
+    </div>
+
+    <div class="relative">
+        <i class="fas fa-phone absolute left-4 top-4 text-gray-300"></i>
+        <input type="tel" id="authPhone" placeholder="Phone Number" class="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 ring-organic-500/20" required>
+    </div>
+
+    <div class="relative" id="emailContainer">
+        <i class="fas fa-envelope absolute left-4 top-4 text-gray-300"></i>
+        <input type="email" id="authEmail" placeholder="Email Address" class="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 ring-organic-500/20">
     </div>
 
     <div class="relative">
         <i class="fas fa-lock absolute left-4 top-4 text-gray-300"></i>
-        <input type="password" id="authPass" placeholder="Password" class="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 ring-organic-500/20 focus:bg-white transition-all" required>
+        <input type="password" id="authPass" placeholder="Password" class="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 ring-organic-500/20" required>
     </div>
     
     <div class="text-right">
-        <a href="#" onclick="auth.showMode('forgot')" id="forgotLink" class="text-xs text-organic-600 hover:text-organic-800 font-bold transition-colors">Forgot Password?</a>
+        <a href="#" onclick="auth.showMode('forgot')" id="forgotLink" class="text-xs text-organic-600 font-bold">Forgot Password?</a>
     </div>
 
-    <button type="submit" id="authBtn" class="w-full bg-organic-900 text-white font-black py-4 rounded-2xl mt-2 hover:bg-organic-700 shadow-xl shadow-organic-900/20 active:scale-95 transition-all">
+    <button type="submit" id="authBtn" class="w-full bg-organic-900 text-white font-black py-4 rounded-2xl mt-2 hover:bg-organic-700 transition-all">
+        Login Securely
+    </button>
+</form>
+    <div class="relative">
+        <i class="fas fa-lock absolute left-4 top-4 text-gray-300"></i>
+        <input type="password" id="authPass" placeholder="Password" class="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 ring-organic-500/20" required>
+    </div>
+    
+    <div class="text-right">
+        <a href="#" onclick="auth.showMode('forgot')" id="forgotLink" class="text-xs text-organic-600 font-bold">Forgot Password?</a>
+    </div>
+
+    <button type="submit" id="authBtn" class="w-full bg-organic-900 text-white font-black py-4 rounded-2xl mt-2 hover:bg-organic-700 transition-all">
         Login Securely
     </button>
 </form>
