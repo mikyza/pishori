@@ -33,7 +33,7 @@ const api = {
 
 
 const auth = {
-    mode: 'login', // 'login', 'register', 'forgot'
+    mode: 'login',
 
     showModal(mode = 'login') {
         this.showMode(mode);
@@ -54,44 +54,47 @@ const auth = {
         }
     },
 
-   showMode(mode) {
-    this.mode = mode;
-    // Use optional chaining or null checks to prevent crashes
-    const elements = {
-        form: document.getElementById('authForm'),
-        forgotForm: document.getElementById('forgotForm'),
-        nameGroup: document.getElementById('nameGroup'),
-        emailGroup: document.getElementById('emailGroup'),
-        title: document.getElementById('authTitle'),
-        btn: document.getElementById('authBtn')
-    };
+    showMode(mode) {
+        this.mode = mode;
+        const form = document.getElementById('authForm');
+        const forgotForm = document.getElementById('forgotForm');
+        
+        const nameGroup = document.getElementById('nameGroup');
+        const emailGroup = document.getElementById('emailGroup');
+        
+        const title = document.getElementById('authTitle');
+        const subtitle = document.getElementById('authSubtitle');
+        const btn = document.getElementById('authBtn');
+        const toggleText = document.getElementById('authToggleText');
+        const toggleLink = document.getElementById('authToggleLink');
+        const forgotLink = document.getElementById('forgotLink');
 
-    // If the main forms are missing, stop immediately to prevent console spam
-    if (!elements.form || !elements.forgotForm) return;
+        if (!form || !forgotForm) return;
 
-    elements.form.classList.add('hidden');
-    elements.forgotForm.classList.add('hidden');
+        form.classList.add('hidden');
+        forgotForm.classList.add('hidden');
 
-    if (mode === 'login') {
-        elements.form.classList.remove('hidden');
-        if (elements.nameGroup) elements.nameGroup.classList.add('hidden');
-        if (elements.emailGroup) elements.emailGroup.classList.add('hidden');
-        if (elements.title) elements.title.innerText = "Welcome Back";
-        if (elements.btn) elements.btn.innerText = "Login Securely";
-    } else if (mode === 'register') {
-        elements.form.classList.remove('hidden');
-        if (elements.nameGroup) elements.nameGroup.classList.remove('hidden');
-        if (elements.emailGroup) elements.emailGroup.classList.remove('hidden');
-        if (elements.title) elements.title.innerText = "Create Account";
-        if (elements.btn) elements.btn.innerText = "Join MWEA HUB";
-    }
-}
-            // Registration needs the email field visible
-            if (emailContainer) emailContainer.classList.remove('hidden');
-            
-            if (btn) btn.innerText = "Join RiceDirect";
+        if (mode === 'login') {
+            form.classList.remove('hidden');
+            if (title) title.innerText = "Welcome Back";
+            if (subtitle) subtitle.innerText = "Log in to access your rewards";
+            if (nameGroup) nameGroup.classList.add('hidden');
+            if (emailGroup) emailGroup.classList.add('hidden');
+            if (btn) btn.innerText = "Login Securely";
+            if (forgotLink) forgotLink.classList.remove('hidden');
+            if (toggleText) toggleText.innerText = "New here?";
+            if (toggleLink) {
+                toggleLink.innerText = "Register now";
+                toggleLink.onclick = () => this.showMode('register');
+            }
+        } else if (mode === 'register') {
+            form.classList.remove('hidden');
+            if (title) title.innerText = "Create Account";
+            if (subtitle) subtitle.innerText = "Join the community and start earning points";
+            if (nameGroup) nameGroup.classList.remove('hidden');
+            if (emailGroup) emailGroup.classList.remove('hidden');
+            if (btn) btn.innerText = "Join MWEA HUB";
             if (forgotLink) forgotLink.classList.add('hidden');
-            
             if (toggleText) toggleText.innerText = "Already a member?";
             if (toggleLink) {
                 toggleLink.innerText = "Login here";
@@ -100,37 +103,28 @@ const auth = {
         } else if (mode === 'forgot') {
             forgotForm.classList.remove('hidden');
             if (title) title.innerText = "Reset Password";
-            if (subtitle) subtitle.innerText = "Follow the steps to secure your account";
-            
-            if (toggleText) toggleText.innerText = "Back to safety?";
-            if (toggleLink) {
-                toggleLink.innerText = "Return to Login";
-                toggleLink.onclick = () => this.showMode('login');
-            }
+            if (subtitle) subtitle.innerText = "Secure your account";
         }
     },
-    
+
     async submit(e) {
         e.preventDefault();
-        
-        // 1. Get and clean the phone number
-        let phoneInput = document.getElementById('authPhone');
-        if (!phoneInput) return;
+        const phoneInput = document.getElementById('authPhone');
+        const passInput = document.getElementById('authPass');
+        const nameInput = document.getElementById('authName');
+        const emailInput = document.getElementById('authEmail');
 
-        let phone = phoneInput.value.trim().replace('+', '');
-        const pass = document.getElementById('authPass').value;
+        let phoneValue = phoneInput.value.trim().replace('+', '');
+        let passValue = passInput.value;
 
-        // 2. Determine endpoint and build the body
         const endpoint = this.mode === 'login' ? '/api/auth/login' : '/api/auth/register';
-        let body = { phone, password: pass };
+        let body = { phone: phoneValue, password: passValue };
         
         if (this.mode === 'register') {
-            body.name = document.getElementById('authName').value;
-            body.email = document.getElementById('authEmail').value;
+            body.name = nameInput.value.trim();
+            body.email = emailInput.value.trim();
         }
-// Add this inside your auth.submit function
-const pass = document.getElementById('authPass').value;
-console.log("Password length being sent:", pass.length);
+
         try {
             const res = await api.request(endpoint, { 
                 method: 'POST', 
@@ -141,21 +135,20 @@ console.log("Password length being sent:", pass.length);
                 state.user = res;
                 localStorage.setItem('rd_user', JSON.stringify(res));
                 this.hideModal();
-                ui.setupUserEnvironment();
-                ui.toast(`Welcome back, ${res.name}!`);
+                // Ensure ui.setupUserEnvironment exists or change to your refresh logic
+                location.reload(); 
             } else if (res && (res.message || res.success)) {
                 ui.toast("Account created! Please login.");
                 this.showMode('login');
             }
         } catch (error) {
             console.error("Auth Error:", error);
-            ui.toast(error.message || "Login failed. Check your details.");
+            ui.toast(error.message || "Login failed.");
         }
     },
 
     async submitForgot(e) {
         e.preventDefault();
-        // FIX: Matches the id="resetEmail" in your index.html
         const email = document.getElementById('resetEmail').value;
         const newPassword = document.getElementById('resetPass').value;
 
@@ -172,17 +165,8 @@ console.log("Password length being sent:", pass.length);
         } catch (error) {
             ui.toast(error.message || "Reset failed.");
         }
-    },
-
-    logout() {
-        state.user = null;
-        localStorage.removeItem('rd_user');
-        ui.setupUserEnvironment();
-        ui.showView('shop');
-        ui.toast("Logged out successfully");
     }
 };
-
 const ui = {
     setupUserEnvironment() {
         const authDiv = document.getElementById('authLinks');
