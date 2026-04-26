@@ -455,20 +455,62 @@ const cartLogic = {
         }
     },
 
-    async checkout() {
+ // Replace your existing cartLogic.checkout with this:
+async checkout() {
     if (!state.user) return auth.showModal();
     if (state.cart.length === 0) return ui.toast("Cart is empty");
 
     const usePoints = document.getElementById('usePointsToggle')?.checked;
     const finalTotal = parseFloat(document.getElementById('cartTotal').innerText.replace('$', ''));
 
-    // We send the cart and whether points were used. 
-    // The server will re-calculate the pointsEarned for security.
+    // Step 1: Create the order in your database first (Server 3000)
     const payload = {
         items: state.cart,
         total: finalTotal,
         pointsUsed: usePoints ? 100 : 0
     };
+
+    const res = await api.request('/api/orders', { 
+        method: 'POST', 
+        body: JSON.stringify(payload) 
+    });
+
+    if (res && res.success) {
+        ui.toast("Order saved! Initiating M-Pesa payment...", "success");
+        
+        // Step 2: Trigger the STK Push (Server 3500)
+        // Note: Using the phone number stored in state.user
+        this.initiateMpesa(finalTotal);
+    }
+},
+
+async initiateMpesa(amount) {
+    try {
+        // Pointing to your M-Pesa server on port 3500
+        const response = await fetch("http://localhost:3500/stkpush", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                phone: state.user.phone, // Passing the phone from logged in user
+                amount: amount
+            }),
+        });
+        
+        const result = await response.json();
+        if(result.message) {
+            ui.toast("Check your phone for the M-Pesa prompt!");
+            
+            // Clear cart only after payment is initiated
+            state.cart = [];
+            localStorage.removeItem('rd_cart');
+            this.renderItems();
+            ui.toggleCart();
+        }
+    } catch (error) {
+        console.error("Payment Error:", error);
+        ui.toast("M-Pesa Service Unavailable", "error");
+    }
+}
 
     const res = await api.request('/api/orders', { 
         method: 'POST', 
