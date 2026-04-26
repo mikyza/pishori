@@ -32,7 +32,7 @@ const api = {
 };
 
 const auth = {
-    mode: 'login', // 'login', 'register', 'forgot'
+    mode: 'login',
 
     showModal(mode = 'login') {
         this.showMode(mode);
@@ -49,28 +49,36 @@ const auth = {
         setTimeout(() => { modal.classList.add('invisible'); }, 300);
     },
 
-showMode(mode) {
+    showMode(mode) {
         this.mode = mode;
         const form = document.getElementById('authForm');
         const forgotForm = document.getElementById('forgotForm');
         const title = document.getElementById('authTitle');
-        const subtitle = document.getElementById('authSubtitle'); // Added subtitle support
+        const subtitle = document.getElementById('authSubtitle');
+        
         const nameInput = document.getElementById('authName');
+        const emailContainer = document.getElementById('emailContainer');
+        const emailInput = document.getElementById('authEmail');
+        
         const btn = document.getElementById('authBtn');
         const toggleText = document.getElementById('authToggleText');
         const toggleLink = document.getElementById('authToggleLink');
         const forgotLink = document.getElementById('forgotLink');
 
-        // Hide both initially
         form.classList.add('hidden');
         forgotForm.classList.add('hidden');
 
         if (mode === 'login') {
             form.classList.remove('hidden');
             title.innerText = "Welcome Back";
-            subtitle.innerText = "Log in to access your premium pishori and rewards";
+            subtitle.innerText = "Log in with your phone and password";
+            
+            // Hide registration-only fields
             nameInput.classList.add('hidden');
             nameInput.removeAttribute('required');
+            emailContainer.classList.add('hidden');
+            emailInput.removeAttribute('required');
+            
             btn.innerText = "Login Securely";
             forgotLink.classList.remove('hidden');
             toggleText.innerText = "New here?";
@@ -80,8 +88,13 @@ showMode(mode) {
             form.classList.remove('hidden');
             title.innerText = "Create Account";
             subtitle.innerText = "Join the community and start earning points";
+            
+            // Show registration fields
             nameInput.classList.remove('hidden');
             nameInput.setAttribute('required', 'true');
+            emailContainer.classList.remove('hidden');
+            emailInput.setAttribute('required', 'true');
+            
             btn.innerText = "Join RiceDirect";
             forgotLink.classList.add('hidden');
             toggleText.innerText = "Already a member?";
@@ -99,24 +112,38 @@ showMode(mode) {
     
     async submit(e) {
         e.preventDefault();
-        const email = document.getElementById('authEmail').value;
+        const phone = document.getElementById('authPhone').value;
         const pass = document.getElementById('authPass').value;
-        const name = document.getElementById('authName').value;
+        
+        // Prepare the body based on mode
+        let body = { phone, password: pass };
+        
+        if (this.mode === 'register') {
+            body.name = document.getElementById('authName').value;
+            body.email = document.getElementById('authEmail').value;
+        }
 
         const endpoint = this.mode === 'login' ? '/api/auth/login' : '/api/auth/register';
-        const body = this.mode === 'login' ? { email, password: pass } : { name, email, password: pass };
 
-        const res = await api.request(endpoint, { method: 'POST', body: JSON.stringify(body) });
-        
-        if (res && res.token) {
-            state.user = res;
-            localStorage.setItem('rd_user', JSON.stringify(res));
-            this.hideModal();
-            ui.setupUserEnvironment();
-            ui.toast(`Welcome back!`);
-        } else if (res && res.message) {
-            ui.toast("Account created! Please login.");
-            this.showMode('login');
+        try {
+            const res = await api.request(endpoint, { 
+                method: 'POST', 
+                body: JSON.stringify(body) 
+            });
+            
+            if (res && res.token) {
+                state.user = res;
+                localStorage.setItem('rd_user', JSON.stringify(res));
+                this.hideModal();
+                ui.setupUserEnvironment();
+                ui.toast(`Welcome back!`);
+            } else if (res && res.message) {
+                // Handle successful registration redirect to login
+                ui.toast("Account created! Log in with your phone.");
+                this.showMode('login');
+            }
+        } catch (error) {
+            ui.toast("Authentication failed. Check your details.");
         }
     },
 
