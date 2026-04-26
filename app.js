@@ -99,23 +99,50 @@ showMode(mode) {
     },
     
 async submit(e) {
-    e.preventDefault();
-    
-    // Get the raw value and clean it
-    let phone = document.getElementById('authPhone').value.trim();
-    
-    // Remove '+' if the user typed it (e.g., +254 -> 254)
-    phone = phone.replace('+', '');
-    
-    const pass = document.getElementById('authPass').value;
+        e.preventDefault();
+        
+        // 1. Get and clean the phone number
+        let phone = document.getElementById('authPhone').value.trim();
+        phone = phone.replace('+', '');
+        
+        // 2. Get the password
+        const pass = document.getElementById('authPass').value;
 
-    console.log("Sending to Backend:", { phone }); // Debugging
+        console.log("Attempting login with:", { phone });
 
-    const body = { phone, password: pass };
-    const endpoint = this.mode === 'login' ? '/api/auth/login' : '/api/auth/register';
+        // 3. Determine endpoint and build the body
+        const endpoint = this.mode === 'login' ? '/api/auth/login' : '/api/auth/register';
+        let body = { phone, password: pass };
+        
+        // If registering, we need to grab the name and email too
+        if (this.mode === 'register') {
+            body.name = document.getElementById('authName').value;
+            body.email = document.getElementById('authEmail').value;
+        }
 
-    // ... your fetch/api.request code
-}
+        try {
+            // 4. Send the request to your ngrok backend
+            const res = await api.request(endpoint, { 
+                method: 'POST', 
+                body: JSON.stringify(body) 
+            });
+            
+            // 5. Handle the response
+            if (res && res.token) {
+                state.user = res;
+                localStorage.setItem('rd_user', JSON.stringify(res));
+                this.hideModal();
+                ui.setupUserEnvironment();
+                ui.toast(`Welcome back, ${res.name}!`);
+            } else if (res && res.message) {
+                ui.toast("Account created! Please login.");
+                this.showMode('login');
+            }
+        } catch (error) {
+            console.error("Auth Error:", error);
+            ui.toast("Login failed. Check your phone or password.");
+        }
+    },
 
     async submitForgot(e) {
         e.preventDefault();
