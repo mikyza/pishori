@@ -54,52 +54,38 @@ const auth = {
         }
     },
 
-    showMode(mode) {
-        this.mode = mode;
-        const form = document.getElementById('authForm');
-        const forgotForm = document.getElementById('forgotForm');
-        const title = document.getElementById('authTitle');
-        const subtitle = document.getElementById('authSubtitle');
-        const nameInput = document.getElementById('authName');
-        const emailContainer = document.getElementById('emailContainer'); 
-        const btn = document.getElementById('authBtn');
-        const toggleText = document.getElementById('authToggleText');
-        const toggleLink = document.getElementById('authToggleLink');
-        const forgotLink = document.getElementById('forgotLink');
+   showMode(mode) {
+    this.mode = mode;
+    // Use optional chaining or null checks to prevent crashes
+    const elements = {
+        form: document.getElementById('authForm'),
+        forgotForm: document.getElementById('forgotForm'),
+        nameGroup: document.getElementById('nameGroup'),
+        emailGroup: document.getElementById('emailGroup'),
+        title: document.getElementById('authTitle'),
+        btn: document.getElementById('authBtn')
+    };
 
-        if (!form || !forgotForm) return;
+    // If the main forms are missing, stop immediately to prevent console spam
+    if (!elements.form || !elements.forgotForm) return;
 
-        form.classList.add('hidden');
-        forgotForm.classList.add('hidden');
+    elements.form.classList.add('hidden');
+    elements.forgotForm.classList.add('hidden');
 
-        if (mode === 'login') {
-            form.classList.remove('hidden');
-            if (title) title.innerText = "Welcome Back";
-            if (subtitle) subtitle.innerText = "Log in to access your premium pishori and rewards";
-            
-            if (nameInput) {
-                nameInput.classList.add('hidden');
-                nameInput.removeAttribute('required');
-            }
-            if (emailContainer) emailContainer.classList.add('hidden');
-            
-            if (btn) btn.innerText = "Login Securely";
-            if (forgotLink) forgotLink.classList.remove('hidden');
-            
-            if (toggleText) toggleText.innerText = "New here?";
-            if (toggleLink) {
-                toggleLink.innerText = "Register now";
-                toggleLink.onclick = () => this.showMode('register');
-            }
-        } else if (mode === 'register') {
-            form.classList.remove('hidden');
-            if (title) title.innerText = "Create Account";
-            if (subtitle) subtitle.innerText = "Join the community and start earning points";
-            
-            if (nameInput) {
-                nameInput.classList.remove('hidden');
-                nameInput.setAttribute('required', 'true');
-            }
+    if (mode === 'login') {
+        elements.form.classList.remove('hidden');
+        if (elements.nameGroup) elements.nameGroup.classList.add('hidden');
+        if (elements.emailGroup) elements.emailGroup.classList.add('hidden');
+        if (elements.title) elements.title.innerText = "Welcome Back";
+        if (elements.btn) elements.btn.innerText = "Login Securely";
+    } else if (mode === 'register') {
+        elements.form.classList.remove('hidden');
+        if (elements.nameGroup) elements.nameGroup.classList.remove('hidden');
+        if (elements.emailGroup) elements.emailGroup.classList.remove('hidden');
+        if (elements.title) elements.title.innerText = "Create Account";
+        if (elements.btn) elements.btn.innerText = "Join MWEA HUB";
+    }
+}
             // Registration needs the email field visible
             if (emailContainer) emailContainer.classList.remove('hidden');
             
